@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Express API for the UKFP Allocation Modeller.",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "dev": "nodemon src/server.ts",
     "build": "tsc",
