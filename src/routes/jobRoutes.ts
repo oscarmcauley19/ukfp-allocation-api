@@ -1,5 +1,8 @@
 import { Router, Request, Response } from "express";
 import { Job } from "../models/jobModels";
+import axios from "axios";
+import { config } from "../config/config";
+import { redis } from "../server";
 
 const router = Router();
 
@@ -30,24 +33,33 @@ router.get("/", (req: Request, res: Response) => {
   res.json(jobs);
 });
 
-// Get a single job by id
-router.get("/:id", (req: Request, res: Response) => {
-  const deanery = jobs.find((j) => j.jobId === parseInt(req.params.id));
-  if (!deanery) {
-    res.status(404).json({ message: "Job not found" });
-  }
-  res.json(deanery);
+router.post("/", async (req: Request, res: Response) => {
+  const jobId = Date.now().toString();
+  console.log("Creating job with ID:", jobId);
+
+  // Trigger Celery task via Python endpoint
+  const response = await axios.post(`${config.WORKER_API_URL}/start-job`, {
+    job_id: jobId,
+  });
+
+  res.json({ jobId: response.data.job_id });
 });
 
-router.post("/", (req: Request, res: Response) => {
-  const newJob: Job = {
-    jobId: jobs.length + 1,
-    userId: 1,
-    dateStarted: new Date(),
-    dateCompleted: null,
-  };
-  jobs.push(newJob);
-  res.status(201).json(newJob);
+router.get("/job/:jobId", async (req: Request, res: Response) => {
+  const { jobId } = req.params;
+
+  try {
+    const status = await redis.get(`job:${jobId}:status`);
+
+    if (!status) {
+      res.status(404).json({ error: "Job not found" });
+    }
+
+    res.json({ jobId, status });
+  } catch (error) {
+    console.error(`Error retrieving job ${jobId}:`, error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 export default router;
