@@ -34,12 +34,11 @@ router.get("/", (req: Request, res: Response) => {
 });
 
 router.post("/", async (req: Request, res: Response) => {
-  const jobId = Date.now().toString();
-  console.log("Creating job with ID:", jobId);
-
+  console.log("Request body:", req.body);
   // Trigger Celery task via Python endpoint
   const response = await axios.post(`${config.WORKER_API_URL}/start-job`, {
-    job_id: jobId,
+    user_ranking: req.body.user_ranking,
+    runs: req.body.runs,
   });
 
   res.json({ jobId: response.data.job_id });
@@ -49,7 +48,7 @@ router.get("/job/:jobId", async (req: Request, res: Response) => {
   const { jobId } = req.params;
 
   try {
-    const status = await redis.get(`job:${jobId}:status`);
+    const status = await redis.get(`result:${jobId}`);
 
     if (!status) {
       res.status(404).json({ error: "Job not found" });
