@@ -40,11 +40,12 @@ router.post("/", async (req: Request, res: Response) => {
     user_ranking: req.body.user_ranking,
     runs: req.body.runs,
   });
+  console.log("Response from Celery: ", response.data);
 
-  res.json({ jobId: response.data.job_id });
+  res.json({ job_id: response.data.task_id });
 });
 
-router.get("/job/:jobId", async (req: Request, res: Response) => {
+router.get("/:jobId", async (req: Request, res: Response) => {
   const { jobId } = req.params;
 
   try {
@@ -54,7 +55,7 @@ router.get("/job/:jobId", async (req: Request, res: Response) => {
       res.status(404).json({ error: "Job not found" });
     }
 
-    res.json({ jobId, status });
+    res.json(status);
   } catch (error) {
     console.error(`Error retrieving job ${jobId}:`, error);
     res.status(500).json({ error: "Internal server error" });
