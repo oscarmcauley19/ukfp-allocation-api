@@ -53,9 +53,11 @@ router.get("/:jobId", async (req: Request, res: Response) => {
 
     if (!status) {
       res.status(404).json({ error: "Job not found" });
+      return;
     }
 
-    res.json(status);
+    const json = JSON.parse(status);
+    res.json(json);
   } catch (error) {
     console.error(`Error retrieving job ${jobId}:`, error);
     res.status(500).json({ error: "Internal server error" });
