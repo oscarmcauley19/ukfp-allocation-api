@@ -2,10 +2,17 @@ import { Router, Request, Response } from "express";
 import axios from "axios";
 import { config } from "../config/config";
 import { getJobResultById } from "../queries/jobQueries";
+import { startJobSchema } from "../schemas/jobSchemas";
+import { validatePostRequest } from "../utils/validation";
 
 const router = Router();
 
 router.post("/", async (req: Request, res: Response) => {
+  const validationResult = validatePostRequest(req, res, startJobSchema);
+  if (validationResult) {
+    res.status(validationResult.code).json(validationResult.json);
+  }
+
   // Trigger Celery task via Python endpoint
   const response = await axios.post(`${config.WORKER_API_URL}/start-job`, {
     user_ranking: req.body.user_ranking,
